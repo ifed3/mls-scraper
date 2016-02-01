@@ -1,7 +1,7 @@
 import global_const
-import urllib2, json, gzip, lxml, urlparse,
-import sys, multiprocessing, random, time,
-from bs4 import Beautifulspider
+import urllib2, json, gzip, lxml, urlparse
+import sys, multiprocessing, random, time
+from bs4 import BeautifulSoup
 from StringIO import StringIO
 
 BASE_URL = global_const.BASE_URL
