@@ -139,10 +139,9 @@ def populate_city_and_zipcode(geocode_json, listing):
 
 def send_request(url):
     try:
-        tor_process = user_agent.anonymize()
+        #tor_process = user_agent.anonymize()
         print urllib2.urlopen("https://www.atagar.com/echo.php").read() #Get ip address
         doc = urllib2.urlopen(url)
-        print doc
         encoding = doc.info().getheader('Encoding')
         if encoding == "gzip": #Decode
             buffer = StringIO(doc.read())
@@ -154,8 +153,8 @@ def send_request(url):
         print e.reason
         print doc.getcode()
         return None
-    finally:
-        user_agent.stop_tor(tor_process)
+    # finally:
+    #     user_agent.stop_tor(tor_process)
     return doc
 
 def create_spider(doc):
