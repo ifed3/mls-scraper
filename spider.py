@@ -1,34 +1,35 @@
-import global_const
+import global_const, user_agent
 import urllib2, json, gzip, lxml, urlparse
 import sys, multiprocessing, random, time
 from bs4 import BeautifulSoup
 from StringIO import StringIO
 
-BASE_URL = global_const.BASE_URL
 pages_url = set()
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+base_url = ""
+
 #Collates listings from the main city pages_url and populates available properties
 #such as listing url, price, title, date
-def create_page_listings(city_code, listings):
+def create_page_listings(city_url, listings):
+    base_url = city_url
     offset = global_const.OFFSET #maximum offset
-    search_prefix = "search/" + city_code + "/apa"
     while offset > -1:
-        search_url = search_prefix + "?s=" + str(offset)
-        url = urlparse.urljoin(BASE_URL, search_url)
+        url = city_url + "?s=" + str(offset)
         if offset < 100: #main search page
-            url = urlparse.urljoin(BASE_URL, search_prefix)
+            url = city_url
         print url
-        spider = send_request(url)
-        spider = create_spider(spider)
+        doc = send_request(url)
+        spider = create_spider(doc)
         populate_from_search_page(spider, listings)
         offset -= 100
     print len(global_const.pages_url)
     return listings
 
 def populate_from_search_page(spider, listings):
+    listing = global_const.Listing()
     try:
         listing_spiders = spider.find_all(class_='row')
         for listing_spider in listing_spiders:
@@ -78,7 +79,7 @@ def get_address(spider, listing):
 
 def get_listing_url(spider):
     link_tag = spider.find('a', href=True)
-    url = urlparse.urljoin(BASE_URL, link_tag['href'])
+    url = urlparse.urljoin(base_url, link_tag['href'])
     return url
 
 def get_listing_name(spider):
@@ -138,9 +139,14 @@ def populate_city_and_zipcode(geocode_json, listing):
 
 def send_request(url):
     try:
+        tor_process = user_agent.anonymize()
+        print urllib2.urlopen("https://www.atagar.com/echo.php").read() #Get ip address
         doc = urllib2.urlopen(url)
-        buffer = StringIO(doc.read())
-        doc = gzip.GzipFile(fileobj=buffer)
+        print doc
+        encoding = doc.info().getheader('Encoding')
+        if encoding == "gzip": #Decode
+            buffer = StringIO(doc.read())
+            doc = gzip.GzipFile(fileobj=buffer)
     except urllib2.URLError as e:
         print e.reason
         return None
@@ -148,11 +154,13 @@ def send_request(url):
         print e.reason
         print doc.getcode()
         return None
+    finally:
+        user_agent.stop_tor(tor_process)
     return doc
 
 def create_spider(doc):
     try:
-        spider = Beautifulspider(doc.read(), 'lxml') #Use the lxml html parser
+        spider = BeautifulSoup(doc.read(), 'lxml') #Use the lxml html parser
     except AttributeError as e:
         return None
     return spider
