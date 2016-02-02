@@ -1,5 +1,3 @@
-BASE_URL = "http://www.craigslist.org/"
-EAST_BAY_APT = "search/eby/apa"
 GECODOING_URL = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
 OFFSET = 2400
 #Periodically update the operating system and broswer version number
