@@ -1,16 +1,22 @@
-import global_const, urllib2
+import global_const
+import urllib2, ssl
 import socks, socket #SocksiPy module
 import stem.process #Tor launcher
 
 from stem.util import term
 
-#Build user agent properties
-
 SOCKS_PORT = 7000
 
+def anonymize():
+    set_proxy()
+    tor_process = start_tor()
+    set_dns()
+    return tor_process
+
 #Set up proxy service
-socks.setdefaultproxy(socks.SOCKS5, 'localhost', SOCKS_PORT)
-socket.socket = socks.socksocket
+def set_proxy():
+    socks.setdefaultproxy(socks.SOCKS5, 'localhost', SOCKS_PORT)
+    socket.socket = socks.socksocket
 
 #Configre Tor startup for anonymous scraping
 def print_boostrap_lines(line):
@@ -26,20 +32,22 @@ def start_tor():
         },
         init_msg_handler = print_boostrap_lines,
     )
+    return tor_process
+
+def stop_tor(tor_process):
+    tor_process.kill()
 
 #Avoid DNS leaks by performing DNS resolution via the socket
 def getaddrinfo(*args):
     return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
 
-socket.getaddrinfo = getaddrinfo
+def set_dns():
+    socket.getaddrinfo = getaddrinfo
 
 #Permits identitty of scraping application to resemeble that of a browser
 def create_user_agent():
-    urllib2.install_opener(opener())
-
-def opener():
-    opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=1))
-    #urllib2.HTTPHandler(debuglevel=1))
+    opener = urllib2.build_opener()
+    #urllib2.HTTPSHandler(debuglevel=1), urllib2.HTTPHandler(debuglevel=1)
     opener.addheaders = [
             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
             ('Accept-Encoding', 'gzip, deflate, sdch'),
@@ -47,4 +55,4 @@ def opener():
             ('Connection', 'keep-alive'),
             ('User-agent', global_const.USER_AGENT)
             ]
-    return opener
+    urllib2.install_opener(opener)
