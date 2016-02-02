@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import global_const, user_agent, spider
 import urllib2, time, multiprocessing, urlparse, lxml, csv
 
