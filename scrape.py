@@ -4,11 +4,14 @@ import global_const, user_agent, spider
 import urllib2, time, multiprocessing, urlparse, lxml, csv
 
 user_agent.create_user_agent()
+print spider.send_request("https://www.atagar.com/echo.php").read() #Get ip address
 
 #Goes to the main city page
-city_url = "https://sfbay.craigslist.org/search/eby/apa"
-listings = []
-listings = spider.create_page_listings(city_url, listings)
+city_name = "Chicago"
+city_url = "https://chicago.craigslist.org/search/chc/apa"
+
+city_table = create_mongo_collection(city_name)
+listings = spider.create_page_listings(city_name, city_url)
 
 #Add keys to create header for csv file
 listing_dict = []
@@ -18,7 +21,8 @@ listing = listing.keys()
 listing_dict.append(listing)
 
 for listing in listings:
-    spider.populate_fields_present_on_listing_page(listing)
+    spider.populate_from_listing_page(listing)
+    spider.add_listing_to_collection(city_table, listing)
     dict_list = listing.__dict__
     val_list = dict_list.values()
     listing_dict.append(val_list)
