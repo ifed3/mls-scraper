@@ -7,7 +7,7 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel MAC OS X 10_9_5) AppleWebKit/537.36 
 class Listing:
     def __init__(self):
         self.url = ""
-        self.prop_name = ""
+        self.description = ""
         self.date = ""
         self.city = ""
         self.zipcode = ""

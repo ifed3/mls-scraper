@@ -20,8 +20,7 @@ def create_mongo_collection(city_name):
     return collection
 
 def add_listing_to_collection(collection, listing):
-    listing_json = json.dumps(listing.__dict__)
-    collection.insert_one(listing_json)
+    collection.insert_one(listing.__dict__)
 
 #Collates listings from the main city pages_url and populates available properties
 #such as listing url, price, title, date
@@ -50,7 +49,7 @@ def populate_from_search_page(spider, listings, city_url):
             listing.url = get_listing_url(listing_spider, city_url)
             if listing.url not in pages_url:
                 pages_url.add(listing.url)
-                listing.prop_name = get_listing_name(listing_spider)
+                listing.description = get_listing_name(listing_spider)
                 listing.price = get_listing_price(listing_spider)
                 listings.append(listing)
     except Exception, e:
