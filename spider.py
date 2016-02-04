@@ -17,6 +17,7 @@ def create_mongo_collection(city_name):
     client = MongoClient('localhost', 27017)
     db = client.shadow_market
     collection = db[city_name]
+    collection.create_index([('url', pymongo.ASCENDING)], unique=True)
     return collection
 
 def add_listing_to_collection(collection, listing):
