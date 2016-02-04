@@ -1,31 +1,15 @@
 import global_const, user_agent
-import urllib2, json, gzip, lxml, urlparse
+import urllib2, json, gzip, lxml, urlparse, pymongo
 import sys, multiprocessing, random, time, datetime
 from bs4 import BeautifulSoup
 from StringIO import StringIO
-import pymongo
-from pymongo import MongoClient
-
-
-pages_url = set()
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-def create_mongo_collection(city_name):
-    client = MongoClient()
-    client = MongoClient('localhost', 27017)
-    db = client.shadow_market
-    collection = db[city_name]
-    collection.create_index([('url', pymongo.ASCENDING)], unique=True)
-    return collection
-
-def add_listing_to_collection(collection, listing):
-    collection.insert_one(listing.__dict__)
-
-#Collates listings from the main city pages_url and populates available properties
+#Collates listings from the main city url_list and populates available properties
 #such as listing url, price, title, date
-def create_page_listings(city_name, city_url):
+def create_page_listings(city_name, city_url, url_list):
     listings = []
     offset = global_const.OFFSET #maximum offset
     while offset > -1:
@@ -35,21 +19,23 @@ def create_page_listings(city_name, city_url):
         print url
         doc = send_request(url)
         spider = create_spider(doc)
-        populate_from_search_page(spider, listings, city_url)
+        populate_from_search_page(spider, listings, city_url, url_list)
         offset -= 100
-    print len(pages_url)
+    print len(url_list), "total listings available"
     return listings
 
-def populate_from_search_page(spider, listings, city_url):
+def populate_from_search_page(spider, listings, city_url, url_list):
     try:
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
         listing_spiders.reverse()
         for listing_spider in listing_spiders:
-            listing = global_const.Listing()
-            listing.url = get_listing_url(listing_spider, city_url)
-            if listing.url not in pages_url:
-                pages_url.add(listing.url)
+            #Create a new listing object only when a url does not exist in the database
+            url = get_listing_url(listing_spider, city_url)
+            if url not in url_list:
+                url_list.add(url)
+                listing = global_const.Listing()
+                listing.url = url
                 listing.description = get_listing_name(listing_spider)
                 listing.price = get_listing_price(listing_spider)
                 listings.append(listing)
@@ -75,7 +61,7 @@ def populate_from_listing_page(listing, collection):
         get_address(spider, listing)
         get_city_and_zipcode(listing)
         try:
-            add_listing_to_collection(collection, listing)
+            add_listing_to_database(collection, listing)
         except Exception, e:
             print str(e)
 
@@ -152,6 +138,9 @@ def populate_city_and_zipcode(geocode_json, listing):
         if result['types'][0] == "postal_code":
             listing.zipcode = result['long_name']
             break
+
+def add_listing_to_database(collection, listing):
+    collection.insert_one(listing.__dict__)
 
 def send_request(url):
     try:
