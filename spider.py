@@ -104,9 +104,8 @@ def get_listing_name(spider):
     return name
 
 def get_listing_date(spider):
-    time_tag = spider.find(class_='postinginfo').time
-    datetime = time_tag['title']
-    date = datetime.split(" ")[0]
+    time = spider.find(class_='postinginfo').time
+    date = time.get_text().split(" ")[0]
     return date
 
 def populate_bed_and_bath(spider, listing):

@@ -10,7 +10,7 @@ print spider.send_request("https://www.atagar.com/echo.php").read() #Get ip addr
 city_name = "Chicago"
 city_url = "https://chicago.craigslist.org/search/chc/apa"
 
-city_table = create_mongo_collection(city_name)
+city_table = spider.create_mongo_collection(city_name)
 listings = spider.create_page_listings(city_name, city_url)
 
 #Add keys to create header for csv file
@@ -21,8 +21,7 @@ listing = listing.keys()
 listing_dict.append(listing)
 
 for listing in listings:
-    spider.populate_from_listing_page(listing)
-    spider.add_listing_to_collection(city_table, listing)
+    spider.populate_from_listing_page(listing, city_table)
     dict_list = listing.__dict__
     val_list = dict_list.values()
     listing_dict.append(val_list)
