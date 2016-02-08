@@ -7,6 +7,9 @@ from StringIO import StringIO
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+#create modules for a single page and for several pages
+
+
 #Collates listings from the main city url_list and populates available properties
 #such as listing url, price, title, date
 def create_page_listings(city_name, city_url, url_list):
@@ -24,6 +27,7 @@ def create_page_listings(city_name, city_url, url_list):
     print len(url_list), "total listings available"
     return listings
 
+#Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
     try:
         listing_spiders = spider.find_all(class_='row')
@@ -43,17 +47,19 @@ def populate_from_search_page(spider, listings, city_url, url_list):
         print str(e)
         print listing.url
 
-#This function populates other fields that require entry into the listing link
+#Populates remaining fields that require entry into the listing link
 #and cannot be grabbed from the search page
 def populate_from_listing_page(listing, collection):
     listing_url = listing.url
     doc = send_request(listing_url)
+    #Place a delay of up to 5 seconds between each request + processing time
     random_delay()
     spider = create_spider(doc)
     if spider == None:
         print "Listing could not be found :", listing_url
     else:
         listing.date = get_listing_date(spider)
+        populate_page_ids(spider, listing)
         spider = spider.find(class_='mapAndAttrs')
         populate_bed_and_bath(spider, listing)
         populate_footage(spider, listing)
@@ -64,6 +70,23 @@ def populate_from_listing_page(listing, collection):
             add_listing_to_database(collection, listing)
         except Exception, e:
             print str(e)
+
+def populate_page_ids(spider, listing):
+    try:
+        scripts = spider.find_all("script")
+        id_group = ""
+        for script in scripts:
+            if "pID" in script.string:
+                id_group = script.string
+                break
+        id_group = id_group.split(";")
+        for text in id_group:
+            if "pID" in text:
+                listing.post_id = long(text.split('"')[1])
+            if "repost" in text:
+                listing.repost_of = text.split("= ")[1]
+    except AttributeError as e:
+        print "Page IDs error : ", listing.url
 
 def get_listing_price(spider):
     try:
@@ -78,7 +101,7 @@ def get_address(spider, listing):
         address = addressTag.get_text()
         listing.address = address
     except AttributeError as e:
-        print "Address error : ", listing.url
+        print "Address error :", listing.url
 
 def get_listing_url(spider, city_url):
     link_tag = spider.find('a', href=True)
@@ -140,7 +163,12 @@ def populate_city_and_zipcode(geocode_json, listing):
             break
 
 def add_listing_to_database(collection, listing):
-    collection.insert_one(listing.__dict__)
+    try:
+        listing.database_input_date = datetime.datetime.utcnow()
+        collection.insert_one(listing.__dict__)
+    except Exception, e:
+        print str(e)
+        print "Failure to add item to db :", listing.url
 
 def send_request(url):
     try:
