@@ -7,18 +7,21 @@ from pymongo import MongoClient
 
 def request_user_input():
     global city_name
-    city_name = raw_input("Enter location name: ")
+    #city_name = raw_input("Enter location name: ")
+    city_name = "Humboldt"
     global city_url
-    city_url = raw_input("Enter url referring to location (eg. for Chicago, https://chicago.craigslist.org/search/chc/apa): ")
+    #city_url = raw_input("Enter url referring to location (eg. for Chicago, https://chicago.craigslist.org/search/chc/apa): ")
+    city_url = "https://humboldt.craigslist.org/search/apa"
     global csv_directory
-    csv_directory = raw_input("Enter folder to save results to csv file: ")
+    #csv_directory = raw_input("Enter folder to save results to csv file: ")
+    csv_directory= "/Users/ifed3/Documents/Development/Repositories/shadow-mls-crawler"
 
 def create_database(city_name):
     client = MongoClient()
     client = MongoClient('localhost', 27017)
     db = client.shadow_market
     collection = db[city_name]
-    collection.create_index([('url', pymongo.ASCENDING)], unique=True)
+    collection.create_index([('post_id', pymongo.ASCENDING)], unique=True)
     return collection
 
 def retrieve_urls_from_database(collection):
@@ -39,12 +42,11 @@ def write_csv_file(csv_directory, city_name, city_table):
     documents = city_table.find(projection={'_id':False})
     #Convert json from db to csv
     #JSON represents flat object, if that changes in the future, this code will not be entirely functional
-    csv_filename = os.path.join(csv_directory, city_name + "_shadow.csv")
-    print csv_filename
+    csv_filename = os.path.join(csv_directory, city_name + " Shadow.csv")
     with open(csv_filename, "wb+") as myfile:
         #Use dict writer in csv creation to ensure desired order
-        fieldnames = ["city", "description", "url", "footage", "zipcode",
-                        "bed", "bath", "date", "lat", "longitude", "address", "price"]
+        fieldnames = ["city", "description", "url", "footage", "zipcode", "bed", "bath",
+                    "date", "lat", "longitude", "address", "price", "post_id", "repost_of", "database_input_date"]
         wr = csv.DictWriter(myfile, fieldnames=fieldnames)
         wr.writeheader()
         for document in documents:
@@ -53,10 +55,15 @@ def write_csv_file(csv_directory, city_name, city_table):
 request_user_input()
 user_agent.create_user_agent()
 print spider.send_request("https://www.atagar.com/echo.php").read() #Get ip address
+global city_table
 city_table = create_database(city_name)
 url_list = retrieve_urls_from_database(city_table)
 scrape_site(city_table, city_url, city_name, url_list)
 write_csv_file(csv_directory, city_name, city_table)
+# except Exception, e:
+#     print str(e)
+# finally:
+#     write_csv_file(csv_directory, city_name, city_table)
 
 # #Goes to the main city page
 # #Use for gui aspect
