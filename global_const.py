@@ -2,7 +2,7 @@ GECODOING_URL = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
 OFFSET = 2400
 #Periodically update the operating system and broswer version number
 #Create array of different user agents to be randomly selected from
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel MAC OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel MAC OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36"
 
 class Listing:
     def __init__(self):
@@ -18,3 +18,6 @@ class Listing:
         self.lat = ""
         self.longitude = ""
         self.address = ""
+        self.post_id=""
+        self.repost_of=""
+        self.database_input_date=""
