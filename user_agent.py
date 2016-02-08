@@ -5,17 +5,18 @@ import stem.process #Tor launcher
 
 from stem.util import term
 
-SOCKS_PORT = 7000
+SOCKS_PORT = 8080
+PROXY_IP = "222.114.148.47"
 
 def anonymize():
     set_proxy()
-    tor_process = start_tor()
+    #tor_process = start_tor()
     set_dns()
-    return tor_process
+    #return tor_process
 
 #Set up proxy service
 def set_proxy():
-    socks.setdefaultproxy(socks.SOCKS5, 'localhost', SOCKS_PORT)
+    socks.setdefaultproxy(socks.SOCKS5, PROXY_IP, SOCKS_PORT)
     socket.socket = socks.socksocket
 
 #Configre Tor startup for anonymous scraping
@@ -56,3 +57,4 @@ def create_user_agent():
             ('User-agent', global_const.USER_AGENT)
             ]
     urllib2.install_opener(opener)
+    anonymize()
