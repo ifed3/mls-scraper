@@ -1,5 +1,5 @@
 import global_const, user_agent
-import urllib2, json, gzip, lxml, urlparse, pymongo
+import requests, json, gzip, lxml, urlparse, pymongo
 import sys, multiprocessing, random, time, datetime
 from bs4 import BeautifulSoup
 from StringIO import StringIO
@@ -178,23 +178,18 @@ def add_listing_to_database(collection, listing):
         print "Failure to add item to db :", listing.url
 
 def send_request(url):
+    result = ""
     try:
-        #tor_process = user_agent.anonymize()
-        doc = urllib2.urlopen(url)
-        encoding = doc.info().getheader('Content-Encoding')
-        if encoding == "gzip": #Decode
-            buffer = StringIO(doc.read())
-            doc = gzip.GzipFile(fileobj=buffer)
-    except urllib2.URLError as e:
-        print e.reason
-        return None
-    except urllib2.HTTPError as e:
-        print e.reason
-        print doc.getcode()
-        return None
-    # finally:
-    #     user_agent.stop_tor(tor_process)
-    return doc
+        response = requests.get(url, headers=global_const.headers)
+        if not response.status_code // 100 == 2:
+            return "Error: Unexxpected response {}".format(response)
+        if 'Content-Encoding' in response.headers and response.headers['Content-Encoding'] == "gzip": #Decode
+            result = response.content
+        else:
+            result = response.text
+    except requests.exceptions.RequestException as e:
+        print "Error: {}".format(e)
+    return result
 
 def create_spider(doc):
     try:
