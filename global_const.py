@@ -9,13 +9,13 @@ MONGO_PORT = 27017
 SOCKS_PORT = 8080
 SOCKS_HOST = "222.114.148.47"
 
-headers = [
-            ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
-            ('Accept-Encoding', 'gzip, deflate, sdch'),
-            ('Accept-language', 'en-US,en;q=0.8'),
-            ('Connection', 'keep-alive'),
-            ('User-agent', USER_AGENT)
-            ]
+headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, sdch',
+            'Accept-language': 'en-US,en;q=0.8',
+            'Connection': 'keep-alive',
+            'User-agent': USER_AGENT
+            }
 
 class Listing:
     def __init__(self):
