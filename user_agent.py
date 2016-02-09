@@ -1,5 +1,5 @@
 import global_const
-import urllib2, ssl
+import ssl
 import socks, socket #SocksiPy module
 # import stem.process #Tor launcher
 
@@ -44,17 +44,3 @@ def getaddrinfo(*args):
 
 def set_dns():
     socket.getaddrinfo = getaddrinfo
-
-#Permits identitty of scraping application to resemeble that of a browser
-def create_user_agent():
-    opener = urllib2.build_opener()
-    #urllib2.HTTPSHandler(debuglevel=1), urllib2.HTTPHandler(debuglevel=1)
-    opener.addheaders = [
-            ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
-            ('Accept-Encoding', 'gzip, deflate, sdch'),
-            ('Accept-language', 'en-US,en;q=0.8'),
-            ('Connection', 'keep-alive'),
-            ('User-agent', global_const.USER_AGENT)
-            ]
-    urllib2.install_opener(opener)
-    #anonymize()
