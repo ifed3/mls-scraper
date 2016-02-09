@@ -1,12 +1,12 @@
 import global_const
 import urllib2, ssl
 import socks, socket #SocksiPy module
-import stem.process #Tor launcher
+# import stem.process #Tor launcher
 
-from stem.util import term
+# from stem.util import term
 
-SOCKS_PORT = 8080
-PROXY_IP = "222.114.148.47"
+SOCKS_PORT = global_const.SOCKS_PORT
+PROXY_IP = global_const.SOCKS_HOST
 
 def anonymize():
     set_proxy()
@@ -57,4 +57,4 @@ def create_user_agent():
             ('User-agent', global_const.USER_AGENT)
             ]
     urllib2.install_opener(opener)
-    anonymize()
+    #anonymize()
