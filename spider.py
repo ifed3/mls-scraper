@@ -58,7 +58,7 @@ def populate_from_listing_page(listing, collection):
     if spider == None:
         print "Listing could not be found :", listing_url
     else:
-        listing.date = get_listing_date(spider)
+        get_listing_date(spider, listing)
         populate_page_ids(spider, listing)
         spider = spider.find(class_='mapAndAttrs')
         populate_bed_and_bath(spider, listing)
@@ -112,10 +112,14 @@ def get_listing_name(spider):
     name = spider.find(class_='hdrlnk').get_text()
     return name
 
-def get_listing_date(spider):
-    time = spider.find(class_='postinginfo').time
-    date = time.get_text().split(" ")[0]
-    return date
+def get_listing_date(spider, listing):
+    date = ""
+    try:
+        time = spider.find(class_='postinginfo').time
+        date = time.get_text().split(" ")[0]
+    except:
+        print "Date error:", listing.url
+    listing.date = date
 
 def populate_bed_and_bath(spider, listing):
     try:
@@ -147,10 +151,13 @@ def get_city_and_zipcode(listing):
         if listing.lat == "" or listing.longitude == "":
             print "Cannot retrieve city information, no lat or long provided :", listing.url
         else:
-            url = global_const.GECODOING_URL + listing.lat + "," + listing.longitude
-            response = send_request(url)
-            geocode_json = json.load(response)
-            populate_city_and_zipcode(geocode_json, listing)
+            try:
+                url = global_const.GECODOING_URL + listing.lat + "," + listing.longitude
+                response = send_request(url)
+                geocode_json = json.load(response)
+                populate_city_and_zipcode(geocode_json, listing)
+            except:
+                print "Geocoding failed:", listing.url
 
 def populate_city_and_zipcode(geocode_json, listing):
     results = geocode_json['results'][0]
