@@ -1,31 +1,42 @@
 import global_const, user_agent
 import requests, json, gzip, lxml, urlparse, pymongo
-import sys, multiprocessing, random, time, datetime
+import sys, threading, random, time, datetime
 from bs4 import BeautifulSoup
 from StringIO import StringIO
+from multiprocessing.dummy import Pool as ThreadPool
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 #create modules for a single page and for several pages
 
+thread_list=[]
 
 #Collates listings from the main city url_list and populates available properties
 #such as listing url, price, title, date
 def create_page_listings(city_name, city_url, url_list):
-    listings = []
     offset = global_const.OFFSET #maximum offset
     while offset > -1:
         url = city_url + "?s=" + str(offset)
         if offset < 100: #main search page
             url = city_url
-        print url
-        doc = send_request(url)
-        spider = create_spider(doc)
-        populate_from_search_page(spider, listings, city_url, url_list)
+        scrape_thread = threading.Thread(target=run_population_thread, args=(url, city_url, url_list))
+        thread_list.append(scrape_thread)
         offset -= 100
+    for thread in thread_list:
+        thread.start()
+    for thread in thread_list:
+        thread.join()
     print len(url_list), "total listings available"
-    return listings
+
+def run_population_thread(url, city_url, url_list):
+    listings = []
+    doc = send_request(url)
+    print url
+    spider = create_spider(doc)
+    populate_from_search_page(spider, listings, city_url, url_list)
+    for listing in listings:
+        populate_from_listing_page(listing, global_const.city_table)
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
@@ -154,9 +165,10 @@ def get_city_and_zipcode(listing):
             try:
                 url = global_const.GECODOING_URL + listing.lat + "," + listing.longitude
                 response = send_request(url)
-                geocode_json = json.load(response)
+                geocode_json = json.loads(response) #Response comes in as string from request
                 populate_city_and_zipcode(geocode_json, listing)
-            except:
+            except Exception as e:
+                print "Error: {}".format(e)
                 print "Geocoding failed:", listing.url
 
 def populate_city_and_zipcode(geocode_json, listing):
@@ -193,7 +205,7 @@ def send_request(url):
 
 def create_spider(doc):
     try:
-        spider = BeautifulSoup(doc.read(), 'lxml') #Use the lxml html parser
+        spider = BeautifulSoup(doc, 'lxml') #Use the lxml html parser
     except AttributeError as e:
         return None
     return spider

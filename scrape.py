@@ -25,9 +25,7 @@ def retrieve_urls_from_database(collection):
     return url_list
 
 def scrape_site(city_table, city_url, city_name, url_list):
-    listings = spider.create_page_listings(global_const.city_name, global_const.city_url, url_list)
-    for listing in listings:
-        spider.populate_from_listing_page(listing, global_const.city_table)
+    spider.create_page_listings(global_const.city_name, global_const.city_url, url_list)
 
 def write_csv_file(csv_directory, city_name, city_table):
     #Retrieve all documents from db (without the id field)
