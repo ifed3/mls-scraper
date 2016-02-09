@@ -46,7 +46,6 @@ def write_csv_file(csv_directory, city_name, city_table):
 
 def set_up():
     global_const.init()
-    user_agent.create_user_agent()
     print spider.send_request(global_const.IP_CHECK_ADDR).read() #Get ip address
     global_const.shadow_db = create_database()
 
