@@ -2,3 +2,4 @@ PySocks
 stem
 pymongo
 beautifulsoup4
+PyQt4
