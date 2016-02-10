@@ -2,7 +2,6 @@ import global_const
 import ssl
 import socks, socket #SocksiPy module
 # import stem.process #Tor launcher
-
 # from stem.util import term
 
 SOCKS_PORT = global_const.SOCKS_PORT

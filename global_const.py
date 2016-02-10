@@ -6,8 +6,8 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel MAC OS X 10_11_3) AppleWebKit/537.36
 IP_CHECK_ADDR = "https://www.atagar.com/echo.php"
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
-SOCKS_PORT = 8080
-SOCKS_HOST = "222.114.148.47"
+SOCKS_PORT = 0
+SOCKS_HOST = ""
 
 headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',

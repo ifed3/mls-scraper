@@ -1,6 +1,6 @@
 PySocks
-stem
 pymongo
 beautifulsoup4
 PyQt4
 requests
+py2exe
