@@ -112,7 +112,7 @@ def get_address(spider, listing):
         address = addressTag.get_text()
         listing.address = address
     except AttributeError as e:
-        print "Address error :", listing.url
+        print "Error, address not present :", listing.url
 
 def get_listing_url(spider, city_url):
     link_tag = spider.find('a', href=True)
@@ -164,7 +164,7 @@ def get_city_and_zipcode(listing):
         else:
             try:
                 url = global_const.GECODOING_URL + listing.lat + "," + listing.longitude
-                response = send_request(url)
+                response = send_request(str(url))
                 geocode_json = json.loads(response) #Response comes in as string from request
                 populate_city_and_zipcode(geocode_json, listing)
             except Exception as e:

@@ -121,6 +121,7 @@ class ShadowGUI(QtGui.QWidget):
             QtGui.QMessageBox.Ok, QtGui.QMessageBox.NoButton, QtGui.QMessageBox.NoButton)
         else:
             #add final check
+            #ensure link in http format and folder in correct form
             reply = QtGui.QMessageBox.warning(self, 'Check values!',
             'Scraping link: ' + global_const.city_url +
             '\nLocation title: ' + global_const.city_name +
