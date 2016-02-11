@@ -1,4 +1,4 @@
-import sys
+import sys, logger
 import global_const, scrape
 from PyQt4 import QtGui, QtCore
 
@@ -143,8 +143,8 @@ class ShadowGUI(QtGui.QWidget):
             self.folderEdit.setText("No folder selected. Please select a folder to save scraping results.")
 
 def main():
-    app = QtGui.QApplication(sys.argv)
     scrape.set_up()
+    app = QtGui.QApplication(sys.argv)
     view = ShadowGUI()
     sys.exit(app.exec_())
 

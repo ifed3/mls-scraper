@@ -39,6 +39,8 @@ class Listing:
 def init():
     global shadow_db
     shadow_db = ""
+    global geocode_db
+    geocode_db = ""
     global city_table
     city_table = ""
     global city_name

@@ -9,6 +9,8 @@ def create_database():
     client = MongoClient()
     client = MongoClient(global_const.MONGO_HOST, global_const.MONGO_PORT)
     db = client.shadow_market
+    #Start up a separate database that holds geocoding information
+    global_const.geocode_db = client.geocoding
     return db
 
 def create_datatable(database, city_name):
@@ -56,15 +58,8 @@ def main():
     except Exception, e:
         print str(e)
     finally:
-        print "Scraping is complete"
+        print "Scraping exited"
         write_csv_file(global_const.csv_directory,
                         global_const.city_name, global_const.city_table)
-
-# #Goes to the main city page
-# global_const.city_name = "San Jose"
-# global_const.city_url = "https://humboldt.craigslist.org/search/apa"
-# global_const.csv_directory= "/Users/ifed3/Documents/Development/Repositories/shadow-mls-crawler"
-# https://chicago.craigslist.org/search/chc/apa
-# /Users/ifed3/Documents/Development/Repositories/shadow-mls-crawler
-
-#Parallelize
+        global_const.shadow_db.close()
+        global_const.geocoding.close()
