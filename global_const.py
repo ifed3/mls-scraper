@@ -1,4 +1,4 @@
-GECODOING_URL = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
+GOOGLE_GEOCODER = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
 OFFSET = 2400
 #Periodically update the operating system and broswer version number
 #Create array of different user agents to be randomly selected from
@@ -47,3 +47,5 @@ def init():
     city_url = ""
     global csv_directory
     csv_directory = ""
+    global geocode_count
+    geocode_count = 0

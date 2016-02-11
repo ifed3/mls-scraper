@@ -163,7 +163,7 @@ def get_city_and_zipcode(listing):
             print "Cannot retrieve city information, no lat or long provided :", listing.url
         else:
             try:
-                url = global_const.GECODOING_URL + listing.lat + "," + listing.longitude
+                url = global_const.GOOGLE_GEOCODER + listing.lat + "," + listing.longitude
                 response = send_request(str(url))
                 geocode_json = json.loads(response) #Response comes in as string from request
                 populate_city_and_zipcode(geocode_json, listing)
