@@ -163,7 +163,8 @@ def get_city_and_zipcode(listing):
             print "Cannot retrieve city information, no lat or long provided :", listing.url
         else:
             try:
-                url = global_const.GOOGLE_GEOCODER + listing.lat + "," + listing.longitude
+                #url = global_const.GOOGLE_GEOCODER + listing.lat + "," + listing.longitude
+                url = global_const.MAPBOX_GEOCODER_START + listing.longitude + "," + listing.lat + global_const.MAPBOX_GEOCODER_END
                 response = send_request(str(url))
                 geocode_json = json.loads(response) #Response comes in as string from request
                 populate_city_and_zipcode(geocode_json, listing)
@@ -172,13 +173,21 @@ def get_city_and_zipcode(listing):
                 print "Geocoding failed:", listing.url
 
 def populate_city_and_zipcode(geocode_json, listing):
-    results = geocode_json['results'][0]
-    for result in results['address_components']:
-        if result['types'][0] == "locality":
-            listing.city = result['long_name']
+    # results = geocode_json['results'][0]
+    # for result in results['address_components']:
+    #     if result['types'][0] == "locality":
+    #         listing.city = result['long_name']
+    #         continue
+    #     if result['types'][0] == "postal_code":
+    #         listing.zipcode = result['long_name']
+    #         break
+    results = geocode_json['features']
+    for result in results:
+        if "place" in result['id']:
+            listing.city = result['text']
             continue
-        if result['types'][0] == "postal_code":
-            listing.zipcode = result['long_name']
+        if "postcode" in result['id']:
+            listing.zipcode = result['text']
             break
 
 def add_listing_to_database(collection, listing):

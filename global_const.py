@@ -1,10 +1,12 @@
 GOOGLE_GEOCODER = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
+MAPBOX_GEOCODER_START = "https://api.mapbox.com/geocoding/v5/mapbox.places/"
+MAPBOX_GEOCODER_END = ".json?access_token=pk.eyJ1IjoidGNnc2NyYXBlIiwiYSI6ImNpa2oxeTh2ejA1Z2Z2MGttYnBjNzI4bXcifQ.Ftfs_hYahINOthUfdWIXMQ"
 OFFSET = 2400
 #Periodically update the operating system and broswer version number
 #Create array of different user agents to be randomly selected from
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel MAC OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36"
 IP_CHECK_ADDR = "https://www.atagar.com/echo.php"
-MONGO_HOST = 'localhost'
+MONGO_HOST = '192.168.8.2'
 MONGO_PORT = 27017
 SOCKS_PORT = 0
 SOCKS_HOST = ""
@@ -39,8 +41,6 @@ class Listing:
 def init():
     global shadow_db
     shadow_db = ""
-    global geocode_db
-    geocode_db = ""
     global city_table
     city_table = ""
     global city_name
@@ -49,5 +49,3 @@ def init():
     city_url = ""
     global csv_directory
     csv_directory = ""
-    global geocode_count
-    geocode_count = 0
