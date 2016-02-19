@@ -59,4 +59,3 @@ def main():
         print "Scraping exited"
         write_csv_file(global_const.csv_directory,
                         global_const.city_name, global_const.city_table)
-        global_const.shadow_db.close()

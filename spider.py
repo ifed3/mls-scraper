@@ -16,11 +16,20 @@ thread_list=[]
 #such as listing url, price, title, date
 def create_page_listings(city_name, city_url, url_list):
     offset = global_const.OFFSET #maximum offset
+    listing_count = 0
+    url_query = ""
+    if "search_distance" in city_url:
+        url_query = city_url.split("?")[1]
+        city_url = city_url.split("?")[0]
     while offset > -1:
         url = city_url + "?s=" + str(offset)
+        if url_query:
+            url = url + "&" + url_query
         if offset < 100: #main search page
             url = city_url
-        scrape_thread = threading.Thread(target=run_population_thread, args=(url, city_url, url_list))
+            if url_query:
+                url = city_url + "?" + url_query
+        scrape_thread = threading.Thread(target=run_population_thread, args=(url, city_url, url_list, listing_count))
         thread_list.append(scrape_thread)
         offset -= 100
     for thread in thread_list:
@@ -29,7 +38,7 @@ def create_page_listings(city_name, city_url, url_list):
         thread.join()
     print len(url_list), "total listings available"
 
-def run_population_thread(url, city_url, url_list):
+def run_population_thread(url, city_url, url_list, listing_count):
     listings = []
     doc = send_request(url)
     print url
@@ -37,6 +46,8 @@ def run_population_thread(url, city_url, url_list):
     populate_from_search_page(spider, listings, city_url, url_list)
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
+        listing_count += 1
+        print listing_count, "listings scraped"
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
