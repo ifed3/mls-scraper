@@ -8,8 +8,6 @@ from multiprocessing.dummy import Pool as ThreadPool
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-#create modules for a single page and for several pages
-
 thread_list=[]
 
 #Collates listings from the main city url_list and populates available properties
@@ -69,7 +67,7 @@ def populate_from_search_page(spider, listings, city_url, url_list):
                 listing.price = get_listing_price(listing_spider)
                 listings.append(listing)
     except Exception, e:
-        print str(e)
+        print "Error: {}".format(e)
         print listing.url
 
 #Populates remaining fields that require entry into the listing link
@@ -81,7 +79,7 @@ def populate_from_listing_page(listing, collection):
     random_delay()
     spider = create_spider(doc)
     if spider == None:
-        print "Listing could not be found :", listing_url
+        print "Error, listing page could not be found:", listing_url
     else:
         get_listing_date(spider, listing)
         populate_page_ids(spider, listing)
@@ -94,7 +92,7 @@ def populate_from_listing_page(listing, collection):
         try:
             add_listing_to_database(collection, listing)
         except Exception, e:
-            print str(e)
+            print "Error: {}".format(e)
 
 def populate_page_ids(spider, listing):
     try:
@@ -111,7 +109,7 @@ def populate_page_ids(spider, listing):
             if "repost" in text:
                 listing.repost_of = text.split("= ")[1]
     except AttributeError as e:
-        print "Page IDs error : ", listing.url
+        print "Error relating to page id(s): ", listing.url
 
 def get_listing_price(spider):
     try:
@@ -143,7 +141,7 @@ def get_listing_date(spider, listing):
         time = spider.find(class_='postinginfo').time
         date = time.get_text().split(" ")[0]
     except:
-        print "Date error:", listing.url
+        print "Error relating to post creation date:", listing.url
     listing.date = date
 
 def populate_bed_and_bath(spider, listing):
@@ -153,7 +151,7 @@ def populate_bed_and_bath(spider, listing):
         listing.bed = group[0].string
         listing.bath = group[1].string
     except:
-        print "Bed/bath error :" , listing.url
+        print "Error, bed and bath info not present:" , listing.url
 
 def populate_footage(spider, listing):
     try:
@@ -162,7 +160,7 @@ def populate_footage(spider, listing):
     except AttributeError as e:
         listing.footage = ""
     except:
-        print "Footage error :", listing.url
+        print "Error, square footage not present:", listing.url
 
 def populate_lat_and_long(spider, listing):
     try:
@@ -170,11 +168,11 @@ def populate_lat_and_long(spider, listing):
         listing.lat = map['data-latitude']
         listing.longitude = map["data-longitude"]
     except:
-        print "Lat/Long Error :", listing.url
+        print "Error, lat/long not present:", listing.url
 
 def get_city_and_zipcode(listing):
         if listing.lat == "" or listing.longitude == "":
-            print "Cannot retrieve city information, no lat or long provided :", listing.url
+            #Nothing
         else:
             try:
                 #url = global_const.GOOGLE_GEOCODER + listing.lat + "," + listing.longitude
@@ -184,7 +182,7 @@ def get_city_and_zipcode(listing):
                 populate_city_and_zipcode(geocode_json, listing)
             except Exception as e:
                 print "Error: {}".format(e)
-                print "Geocoding failed:", listing.url
+                print "Error, geocoding failed:", listing.url
 
 def populate_city_and_zipcode(geocode_json, listing):
     # results = geocode_json['results'][0]
@@ -209,8 +207,8 @@ def add_listing_to_database(collection, listing):
         listing.database_input_date = datetime.datetime.utcnow()
         collection.insert_one(listing.__dict__)
     except Exception, e:
-        print str(e)
-        print "Failure to add item to db :", listing.url
+        print "Error: {}".format(e)
+        print "Failure to add item to db:", listing.url
 
 def send_request(url):
     result = ""
