@@ -17,7 +17,7 @@ def create_page_listings(city_name, city_url, url_list):
     global listing_count
     listing_count = 0
     url_query = ""
-    if "search_distance" in city_url:
+    if "nh" in city_url:
         url_query = city_url.split("?")[1]
         city_url = city_url.split("?")[0]
     while offset > -1:
@@ -32,6 +32,7 @@ def create_page_listings(city_name, city_url, url_list):
         thread_list.append(scrape_thread)
         offset -= 100
     for thread in thread_list:
+        thread.daemon = True
         thread.start()
     for thread in thread_list:
         thread.join()
@@ -46,9 +47,8 @@ def run_population_thread(url, city_url, url_list, listing_count):
     lock = threading.Lock()
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
-        with lock:
-            listing_count += 1
-            print listing_count, "listings scraped"
+        listing_count += 1
+        print listing_count, "listings scraped"
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
@@ -124,7 +124,7 @@ def get_address(spider, listing):
         address = addressTag.get_text()
         listing.address = address
     except AttributeError as e:
-        print "Error, address not present :", listing.url
+        print "Error, address not present:", listing.url
 
 def get_listing_url(spider, city_url):
     link_tag = spider.find('a', href=True)
@@ -171,9 +171,7 @@ def populate_lat_and_long(spider, listing):
         print "Error, lat/long not present:", listing.url
 
 def get_city_and_zipcode(listing):
-        if listing.lat == "" or listing.longitude == "":
-            #Nothing
-        else:
+        if listing.lat and listing.longitude:
             try:
                 #url = global_const.GOOGLE_GEOCODER + listing.lat + "," + listing.longitude
                 url = global_const.MAPBOX_GEOCODER_START + listing.longitude + "," + listing.lat + global_const.MAPBOX_GEOCODER_END
