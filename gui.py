@@ -1,6 +1,8 @@
-import sys, logger
+import sys, logger, signal
 import global_const, scrape
 from PyQt4 import QtGui, QtCore
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class ShadowGUI(QtGui.QWidget):
     def __init__(self):
@@ -143,10 +145,19 @@ class ShadowGUI(QtGui.QWidget):
             self.folderEdit.setText("No folder selected. Please select a folder to save scraping results.")
 
 def main():
-    scrape.set_up()
-    app = QtGui.QApplication(sys.argv)
-    view = ShadowGUI()
-    sys.exit(app.exec_())
+    try:
+        scrape.set_up()
+        app = QtGui.QApplication(sys.argv)
+        view = ShadowGUI()
+        sys.exit(app.exec_())
+    except KeyboardInterrupt:
+        QtCore.QCoreApplication.instance().quit()
+    except Exception as e:
+        print "Error: {}".format(e)
+        print "Well something went wrong, so I will crash not so gracefully"
+        QtCore.QCoreApplication.instance().quit()
+    finally:
+        QtCore.QCoreApplication.instance().quit()
 
 if __name__ == '__main__':
     main()
