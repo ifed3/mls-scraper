@@ -53,24 +53,26 @@ def run_population_thread(url, city_url, url_list, listing_count):
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
-    listing = ""
     try:
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
         listing_spiders.reverse()
         for listing_spider in listing_spiders:
             #Create a new listing object only when a url does not exist in the database
-            url = get_listing_url(listing_spider, city_url)
-            if url not in url_list:
-                url_list.add(url)
-                listing = global_const.Listing()
-                listing.url = url
-                listing.description = get_listing_name(listing_spider)
-                listing.price = get_listing_price(listing_spider)
-                listings.append(listing)
+                url = get_listing_url(listing_spider, city_url)
+                if url not in url_list:
+                    url_list.add(url)
+                    listing = global_const.Listing()
+                    try:
+                        listing.url = url
+                        listing.description = get_listing_name(listing_spider)
+                        listing.price = get_listing_price(listing_spider)
+                        listings.append(listing)
+                    except Exception, e:
+                        print "Error: {}".format(e)
+                        print listing.url
     except Exception, e:
         print "Error: {}".format(e)
-        print listing.url
 
 #Populates remaining fields that require entry into the listing link
 #and cannot be grabbed from the search page
