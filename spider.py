@@ -45,10 +45,11 @@ def run_population_thread(url, city_url, url_list, listing_count):
     spider = create_spider(doc)
     populate_from_search_page(spider, listings, city_url, url_list)
     lock = threading.Lock()
+    thread_name = threading.current_thread().name
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
         listing_count += 1
-        print listing_count, "listings scraped"
+        print thread_name, ":", listing_count, "listings scraped"
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
