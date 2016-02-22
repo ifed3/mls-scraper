@@ -53,6 +53,7 @@ def run_population_thread(url, city_url, url_list, listing_count):
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
+    listing = ""
     try:
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
@@ -111,6 +112,8 @@ def populate_page_ids(spider, listing):
                 listing.repost_of = text.split("= ")[1]
     except AttributeError as e:
         print "Error relating to page id(s): ", listing.url
+    except Exception as e:
+        print "Error: {}".format(e)
 
 def get_listing_price(spider):
     try:
