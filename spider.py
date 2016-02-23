@@ -51,6 +51,7 @@ def run_population_thread(url, city_url, url_list):
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
+    global total_count
     try:
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
