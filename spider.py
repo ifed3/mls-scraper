@@ -3,19 +3,17 @@ import requests, json, gzip, lxml, urlparse, pymongo
 import sys, threading, random, time, datetime
 from bs4 import BeautifulSoup
 from StringIO import StringIO
-from multiprocessing.dummy import Pool as ThreadPool
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 thread_list=[]
+total_count = 0
 
 #Collates listings from the main city url_list and populates available properties
 #such as listing url, price, title, date
 def create_page_listings(city_name, city_url, url_list):
     offset = global_const.OFFSET #maximum offset
-    global listing_count
-    listing_count = 0
     url_query = ""
     if "nh" in city_url:
         url_query = city_url.split("?")[1]
@@ -28,7 +26,7 @@ def create_page_listings(city_name, city_url, url_list):
             url = city_url
             if url_query:
                 url = city_url + "?" + url_query
-        scrape_thread = threading.Thread(target=run_population_thread, args=(url, city_url, url_list, listing_count))
+        scrape_thread = threading.Thread(target=run_population_thread, args=(url, city_url, url_list))
         thread_list.append(scrape_thread)
         offset -= 100
     for thread in thread_list:
@@ -38,14 +36,14 @@ def create_page_listings(city_name, city_url, url_list):
         thread.join()
     print len(url_list), "total listings available"
 
-def run_population_thread(url, city_url, url_list, listing_count):
+def run_population_thread(url, city_url, url_list):
     listings = []
     doc = send_request(url)
     print url
     spider = create_spider(doc)
     populate_from_search_page(spider, listings, city_url, url_list)
-    lock = threading.Lock()
     thread_name = threading.current_thread().name
+    listing_count = 0
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
         listing_count += 1
@@ -57,6 +55,10 @@ def populate_from_search_page(spider, listings, city_url, url_list):
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
         listing_spiders.reverse()
+        lock = threading.Lock()
+        with lock:
+            total_count += listing_spiders.__len__()
+            print "Running total of listings to be scraped :", total_count
         for listing_spider in listing_spiders:
             #Create a new listing object only when a url does not exist in the database
                 url = get_listing_url(listing_spider, city_url)
@@ -230,7 +232,7 @@ def send_request(url):
 
 def create_spider(doc):
     try:
-        spider = BeautifulSoup(doc, 'lxml') #Use the lxml html parser
+        spider = BeautifulSoup(doc, 'html.parser')
     except AttributeError as e:
         return None
     return spider
