@@ -38,7 +38,8 @@ class ShadowGUI(QtGui.QWidget):
         nameEdit.setEditable(True)
         nameEdit.setDuplicatesEnabled(False)
         nameEdit.setInsertPolicy(QtGui.QComboBox.InsertAtTop)
-        nameEdit.addItems(global_const.shadow_db.collection_names())
+        names_list = sorted(global_const.shadow_db.collection_names())
+        nameEdit.addItems(names_list)
         nameEdit.activated[str].connect(self.combo_chosen)
         nameEdit.editTextChanged[str].connect(self.combo_chosen)
 
