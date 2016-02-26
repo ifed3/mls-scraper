@@ -17,11 +17,11 @@ def create_datatable(database, city_name):
     return collection
 
 def retrieve_urls_from_database(collection):
-    url_list = set()
+    url_list = []
     urls = collection.find(projection={'url':True, '_id':False})
     if urls.count() > 0:
         for url in urls:
-            url_list.add(url['url'])
+            url_list.append(url['url'])
     return url_list
 
 def scrape_site(city_table, city_url, city_name, url_list):
