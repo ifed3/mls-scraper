@@ -9,6 +9,8 @@ sys.setdefaultencoding('utf-8')
 
 thread_list=[]
 total_count = 0
+listing_set = []
+scraped_list = set()
 
 #Collates listings from the main city url_list and populates available properties
 #such as listing url, price, title, date
@@ -34,24 +36,28 @@ def create_page_listings(city_name, city_url, url_list):
         thread.start()
     for thread in thread_list:
         thread.join()
-    print len(url_list), "total listings available"
+    print len(scraped_list), "listings newly added from this scraping session"
+    print len(url_list), "total historical listings available for the", city_name, "shadow"
 
 def run_population_thread(url, city_url, url_list):
+    thread_name = threading.current_thread().name
     listings = []
     doc = send_request(url)
     print url
     spider = create_spider(doc)
     populate_from_search_page(spider, listings, city_url, url_list)
-    thread_name = threading.current_thread().name
     listing_count = 0
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
         listing_count += 1
-        print thread_name, ":", listing_count, "listings scraped"
+    #print thread_name, ":", listing_count, "listings scraped"
 
 #Initalize listing with fields that can be retrieved from search page
 def populate_from_search_page(spider, listings, city_url, url_list):
     global total_count
+    global listing_set
+    global scraped_list
+    thread_name = threading.current_thread().name
     try:
         listing_spiders = spider.find_all(class_='row')
         #Reverse the list so the oldest listing on each page is appended first
@@ -59,21 +65,26 @@ def populate_from_search_page(spider, listings, city_url, url_list):
         lock = threading.Lock()
         with lock:
             total_count += listing_spiders.__len__()
-            print "Running total of listings to be scraped :", total_count
+            print "Running total of listings present on shadow site :", total_count, "\n"
         for listing_spider in listing_spiders:
-            #Create a new listing object only when a url does not exist in the database
-                url = get_listing_url(listing_spider, city_url)
-                if url not in url_list:
-                    url_list.add(url)
-                    listing = global_const.Listing()
-                    try:
-                        listing.url = url
-                        listing.description = get_listing_name(listing_spider)
-                        listing.price = get_listing_price(listing_spider)
-                        listings.append(listing)
-                    except Exception, e:
-                        print "Error: {}".format(e)
-                        print listing.url
+            #Create a new listing object for urls not already present in database
+            url = get_listing_url(listing_spider, city_url)
+            if url not in url_list:
+                url_list.append(url)
+                scraped_list.add(url)
+                listing = global_const.Listing()
+                try:
+                    listing.url = url
+                    listing.description = get_listing_name(listing_spider)
+                    listing.price = get_listing_price(listing_spider)
+                    listings.append(listing)
+                except Exception, e:
+                    print "Error: {}".format(e)
+                    print "Listing not added to list:", listing.url
+        with lock:
+            # print thread_name, ":", len(listings), "listings primed for scraping"
+            listing_set.extend(listings)
+            print len(listing_set), "total listings primed for scraping\n"
     except Exception, e:
         print "Error: {}".format(e)
 
@@ -86,7 +97,7 @@ def populate_from_listing_page(listing, collection):
     random_delay()
     spider = create_spider(doc)
     if spider == None:
-        print "Error, listing page could not be found:", listing_url
+        print "Info, listing page could not be found:", listing_url
     else:
         get_listing_date(spider, listing)
         populate_page_ids(spider, listing)
@@ -116,7 +127,7 @@ def populate_page_ids(spider, listing):
             if "repost" in text:
                 listing.repost_of = text.split("= ")[1]
     except AttributeError as e:
-        print "Error relating to page id(s): ", listing.url
+        print "Pages id(s) error: ", listing.url
     except Exception as e:
         print "Error: {}".format(e)
 
@@ -133,7 +144,7 @@ def get_address(spider, listing):
         address = addressTag.get_text()
         listing.address = address
     except AttributeError as e:
-        print "Error, address not present:", listing.url
+        print "Info, address not present:", listing.url
 
 def get_listing_url(spider, city_url):
     link_tag = spider.find('a', href=True)
@@ -141,7 +152,10 @@ def get_listing_url(spider, city_url):
     return url
 
 def get_listing_name(spider):
-    name = spider.find(class_='hdrlnk').get_text()
+    try:
+        name = spider.find(class_='hdrlnk').get_text()
+    except:
+        print "Warning, listing description retrieval not possible"
     return name
 
 def get_listing_date(spider, listing):
@@ -150,7 +164,7 @@ def get_listing_date(spider, listing):
         time = spider.find(class_='postinginfo').time
         date = time.get_text().split(" ")[0]
     except:
-        print "Error relating to post creation date:", listing.url
+        print "Warning, listing either removed or expired:", listing.url
     listing.date = date
 
 def populate_bed_and_bath(spider, listing):
@@ -160,7 +174,7 @@ def populate_bed_and_bath(spider, listing):
         listing.bed = group[0].string
         listing.bath = group[1].string
     except:
-        print "Error, bed and bath info not present:" , listing.url
+        print "Info, bed and bath info not present:" , listing.url
 
 def populate_footage(spider, listing):
     try:
@@ -169,7 +183,7 @@ def populate_footage(spider, listing):
     except AttributeError as e:
         listing.footage = ""
     except:
-        print "Error, square footage not present:", listing.url
+        print "Info, square footage not present:", listing.url
 
 def populate_lat_and_long(spider, listing):
     try:
@@ -177,7 +191,7 @@ def populate_lat_and_long(spider, listing):
         listing.lat = map['data-latitude']
         listing.longitude = map["data-longitude"]
     except:
-        print "Error, lat/long not present:", listing.url
+        print "Info, lat/long not present:", listing.url
 
 def get_city_and_zipcode(listing):
         if listing.lat and listing.longitude:
@@ -189,7 +203,7 @@ def get_city_and_zipcode(listing):
                 populate_city_and_zipcode(geocode_json, listing)
             except Exception as e:
                 print "Error: {}".format(e)
-                print "Error, geocoding failed:", listing.url
+                print "Warning, geocoding failed:", listing.url
 
 def populate_city_and_zipcode(geocode_json, listing):
     # results = geocode_json['results'][0]
@@ -210,9 +224,13 @@ def populate_city_and_zipcode(geocode_json, listing):
             break
 
 def add_listing_to_database(collection, listing):
+    global scraped_list
     try:
         listing.database_input_date = datetime.datetime.utcnow()
         collection.insert_one(listing.__dict__)
+    except pymongo.errors.DuplicateKeyError as e:
+        scraped_list.discard(listing.url)
+        print "Warning, listing already exists in db:", listing.url
     except Exception, e:
         print "Error: {}".format(e)
         print "Failure to add item to db:", listing.url
@@ -222,7 +240,7 @@ def send_request(url):
     try:
         response = requests.get(url, headers=global_const.headers)
         if not response.status_code // 100 == 2:
-            return "Error: Unexxpected response {}".format(response)
+            return "Error: Unexpected response {}".format(response)
         if 'Content-Encoding' in response.headers and response.headers['Content-Encoding'] == "gzip": #Decode
             result = response.content
         else:
