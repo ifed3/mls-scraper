@@ -71,16 +71,16 @@ def populate_from_search_page(spider, listings, city_url, url_list):
             url = get_listing_url(listing_spider, city_url)
             if url not in url_list:
                 url_list.append(url)
-                scraped_list.add(url)
-                listing = global_const.Listing()
-                try:
-                    listing.url = url
-                    listing.description = get_listing_name(listing_spider)
-                    listing.price = get_listing_price(listing_spider)
-                    listings.append(listing)
-                except Exception, e:
-                    print "Error: {}".format(e)
-                    print "Listing not added to list:", listing.url
+            scraped_list.add(url)
+            listing = global_const.Listing()
+            try:
+                listing.url = url
+                listing.description = get_listing_name(listing_spider)
+                listing.price = get_listing_price(listing_spider)
+                listings.append(listing)
+            except Exception, e:
+                print "Error: {}".format(e)
+                print "Listing not added to list:", listing.url
         with lock:
             # print thread_name, ":", len(listings), "listings primed for scraping"
             listing_set.extend(listings)
