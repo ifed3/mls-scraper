@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import global_const, user_agent, spider
-import csv, json, sys, os
+import global_const, spider
+import csv, os
 import pymongo
 from pymongo import MongoClient
 
@@ -17,11 +17,11 @@ def create_datatable(database, city_name):
     return collection
 
 def retrieve_urls_from_database(collection):
-    url_list = []
+    url_list = set()
     urls = collection.find(projection={'url':True, '_id':False})
     if urls.count() > 0:
         for url in urls:
-            url_list.append(url['url'])
+            url_list.add(url['url'])
     return url_list
 
 def scrape_site(city_table, city_url, city_name, url_list):
