@@ -70,8 +70,9 @@ def populate_from_search_page(spider, listings, city_url, url_list):
         for listing_spider in listing_spiders:
             #Create a new listing object for urls not already present in database
             url = get_listing_url(listing_spider, city_url)
+            if url not in url_list:
+                scraped_list.add(url)
             url_list.add(url)
-            scraped_list.add(url)
             listing = global_const.Listing()
             try:
                 listing.url = url
@@ -81,10 +82,6 @@ def populate_from_search_page(spider, listings, city_url, url_list):
             except Exception, e:
                 sys.stdout.write("Error: {}".format(e) + '\n')
                 sys.stdout.write("Listing not added to list: " + listing.url + '\n')
-        with lock:
-            # print thread_name, ":", len(listings), "listings primed for scraping"
-            listing_set.extend(listings)
-            sys.stdout.write(str(len(listing_set)) + " total listings primed for scraping" + "\n")
     except Exception, e:
         sys.stdout.write("Error: {}".format(e) + '\n')
 
