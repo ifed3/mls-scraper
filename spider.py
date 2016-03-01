@@ -1,8 +1,7 @@
-import global_const, user_agent
-import requests, json, gzip, lxml, urlparse, pymongo
+import global_const
+import requests, json, urlparse, pymongo
 import sys, threading, random, time, datetime
 from bs4 import BeautifulSoup
-from StringIO import StringIO
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -43,12 +42,14 @@ def run_population_thread(url, city_url, url_list):
     thread_name = threading.current_thread().name
     listings = []
     doc = send_request(url)
-    print url
+    # print url
+    sys.stdout.write(url + '\n')
     spider = create_spider(doc)
     populate_from_search_page(spider, listings, city_url, url_list)
     listing_count = 0
     for listing in listings:
         populate_from_listing_page(listing, global_const.city_table)
+        sys.stdout.write("Page scraped: " + listing.url + '\n')
         listing_count += 1
     #print thread_name, ":", listing_count, "listings scraped"
 
@@ -65,12 +66,11 @@ def populate_from_search_page(spider, listings, city_url, url_list):
         lock = threading.Lock()
         with lock:
             total_count += listing_spiders.__len__()
-            print "Running total of listings present on shadow site :", total_count, "\n"
+            sys.stdout.write("Running total of listings present on shadow site : " + str(total_count) + "\n")
         for listing_spider in listing_spiders:
             #Create a new listing object for urls not already present in database
             url = get_listing_url(listing_spider, city_url)
-            if url not in url_list:
-                url_list.append(url)
+            url_list.add(url)
             scraped_list.add(url)
             listing = global_const.Listing()
             try:
@@ -79,14 +79,14 @@ def populate_from_search_page(spider, listings, city_url, url_list):
                 listing.price = get_listing_price(listing_spider)
                 listings.append(listing)
             except Exception, e:
-                print "Error: {}".format(e)
-                print "Listing not added to list:", listing.url
+                sys.stdout.write("Error: {}".format(e) + '\n')
+                sys.stdout.write("Listing not added to list: " + listing.url + '\n')
         with lock:
             # print thread_name, ":", len(listings), "listings primed for scraping"
             listing_set.extend(listings)
-            print len(listing_set), "total listings primed for scraping\n"
+            sys.stdout.write(str(len(listing_set)) + " total listings primed for scraping" + "\n")
     except Exception, e:
-        print "Error: {}".format(e)
+        sys.stdout.write("Error: {}".format(e) + '\n')
 
 #Populates remaining fields that require entry into the listing link
 #and cannot be grabbed from the search page
@@ -97,7 +97,7 @@ def populate_from_listing_page(listing, collection):
     random_delay()
     spider = create_spider(doc)
     if spider == None:
-        print "Info, listing page could not be found:", listing_url
+        sys.stdout.write("Info, listing page could not be found: " + listing_url + '\n')
     else:
         get_listing_date(spider, listing)
         populate_page_ids(spider, listing)
@@ -110,7 +110,7 @@ def populate_from_listing_page(listing, collection):
         try:
             add_listing_to_database(collection, listing)
         except Exception, e:
-            print "Error: {}".format(e)
+            sys.stdout.write("Error: {}".format(e) + '\n')
 
 def populate_page_ids(spider, listing):
     try:
@@ -127,9 +127,9 @@ def populate_page_ids(spider, listing):
             if "repost" in text:
                 listing.repost_of = text.split("= ")[1]
     except AttributeError as e:
-        print "Pages id(s) error: ", listing.url
+        sys.stdout.write("Pages id(s) error: " + listing.url + '\n')
     except Exception as e:
-        print "Error: {}".format(e)
+        sys.stdout.write("Error: {}".format(e) + '\n')
 
 def get_listing_price(spider):
     try:
@@ -144,7 +144,7 @@ def get_address(spider, listing):
         address = addressTag.get_text()
         listing.address = address
     except AttributeError as e:
-        print "Info, address not present:", listing.url
+        sys.stdout.write("Info, address not present: " + listing.url + '\n')
 
 def get_listing_url(spider, city_url):
     link_tag = spider.find('a', href=True)
@@ -155,7 +155,7 @@ def get_listing_name(spider):
     try:
         name = spider.find(class_='hdrlnk').get_text()
     except:
-        print "Warning, listing description retrieval not possible"
+        sys.stdout.write("Warning, listing description retrieval not possible" + '\n')
     return name
 
 def get_listing_date(spider, listing):
@@ -164,7 +164,7 @@ def get_listing_date(spider, listing):
         time = spider.find(class_='postinginfo').time
         date = time.get_text().split(" ")[0]
     except:
-        print "Warning, listing either removed or expired:", listing.url
+        sys.stdout.write("Warning, listing either removed or expired: " + listing.url + '\n')
     listing.date = date
 
 def populate_bed_and_bath(spider, listing):
@@ -174,7 +174,7 @@ def populate_bed_and_bath(spider, listing):
         listing.bed = group[0].string
         listing.bath = group[1].string
     except:
-        print "Info, bed and bath info not present:" , listing.url
+        sys.stdout.write("Info, bed and bath info not present: " + listing.url + '\n')
 
 def populate_footage(spider, listing):
     try:
@@ -183,7 +183,7 @@ def populate_footage(spider, listing):
     except AttributeError as e:
         listing.footage = ""
     except:
-        print "Info, square footage not present:", listing.url
+        sys.stdout.write("Info, square footage not present: " + listing.url + '\n')
 
 def populate_lat_and_long(spider, listing):
     try:
@@ -191,7 +191,7 @@ def populate_lat_and_long(spider, listing):
         listing.lat = map['data-latitude']
         listing.longitude = map["data-longitude"]
     except:
-        print "Info, lat/long not present:", listing.url
+        sys.stdout.write("Info, lat/long not present: " + listing.url + '\n')
 
 def get_city_and_zipcode(listing):
         if listing.lat and listing.longitude:
@@ -202,8 +202,8 @@ def get_city_and_zipcode(listing):
                 geocode_json = json.loads(response) #Response comes in as string from request
                 populate_city_and_zipcode(geocode_json, listing)
             except Exception as e:
-                print "Error: {}".format(e)
-                print "Warning, geocoding failed:", listing.url
+                sys.stdout.write("Error: {}".format(e) + '\n')
+                sys.stdout.write("Warning, geocoding failed: " + listing.url + '\n')
 
 def populate_city_and_zipcode(geocode_json, listing):
     # results = geocode_json['results'][0]
@@ -229,11 +229,11 @@ def add_listing_to_database(collection, listing):
         listing.database_input_date = datetime.datetime.utcnow()
         collection.insert_one(listing.__dict__)
     except pymongo.errors.DuplicateKeyError as e:
-        scraped_list.discard(listing.url)
-        print "Warning, listing already exists in db:", listing.url
+        sys.stdout.write("Warning, listing already exists in db and will have details replaced: " + listing.url + '\n')
+        collection.update_one({"post_id": str(listing.post_id)}, {"$set": listing.__dict__})
     except Exception, e:
-        print "Error: {}".format(e)
-        print "Failure to add item to db:", listing.url
+        sys.stdout.write("Error: {}".format(e) + '\n')
+        sys.stdout.write("Failure to add item to db: " + listing.url + '\n')
 
 def send_request(url):
     result = ""
@@ -246,7 +246,7 @@ def send_request(url):
         else:
             result = response.text
     except requests.exceptions.RequestException as e:
-        print "Error: {}".format(e)
+        sys.stdout.write("Error: {}".format(e) + '\n')
     return result
 
 def create_spider(doc):
@@ -257,5 +257,5 @@ def create_spider(doc):
     return spider
 
 def random_delay():
-    sleep_time = random.randint(0,5)
-    time.sleep(sleep_time) #sleep at most 5 seconds after each response to each listing page
+    sleep_time = random.randint(0,3)
+    time.sleep(sleep_time) #sleep at most 3 seconds after each response to each listing page
