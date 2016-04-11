@@ -37,6 +37,9 @@ class Listing:
         self.repost_of=""
         self.database_input_date=""
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 #initialize global variables
 def init():
     global shadow_db
