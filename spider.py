@@ -226,11 +226,69 @@ def add_listing_to_database(collection, listing):
         listing.database_input_date = datetime.datetime.utcnow()
         collection.insert_one(listing.__dict__)
     except pymongo.errors.DuplicateKeyError as e:
-        sys.stdout.write("Warning, listing already exists in db and will have details replaced: " + listing.url + '\n')
-        collection.update_one({"post_id": str(listing.post_id)}, {"$set": listing.__dict__})
+        old_dict = collection.find_one({"post_id": listing.post_id})
+        old_listing = global_const.Listing()
+        for key in old_dict:
+            setattr(old_listing, key, old_dict[key])
+        #update the database input time of the test to be that of the current listing to ensure equality
+        old_listing.database_input_date = listing.database_input_date
+        if not compare_listings(listing, old_listing):
+            sys.stdout.write("Warning, listing already exists in db and will have details replaced: " + listing.url + '\n')
+            collection.update_one({"post_id": listing.post_id}, {"$set": old_listing.__dict__})
     except Exception, e:
         sys.stdout.write("Error: {}".format(e) + '\n')
         sys.stdout.write("Failure to add item to db: " + listing.url + '\n')
+
+def compare_listings(current, old):
+    listings_equal = False
+    if current.url != old.url:
+        old.url = current.url
+        listings_equal = False
+    elif current.post_id != old.post_id:
+        old.post_id = current.post_id
+        listings_equal = False
+    elif current.repost_of != old.repost_of:
+        old.repost_of = current.repost_of
+        listings_equal = False
+    elif current.database_input_date != old.database_input_date:
+        old.database_input_date = current.database_input_date
+        listings_equal = False
+    elif current.description != old.description:
+        old.description = current.description
+        listings_equal = False
+    elif current.date != old.date:
+        old.date = current.date
+        listings_equal = False
+    elif current.city != old.city:
+        old.city = current.city
+        listings_equal = False
+    elif current.zipcode != old.zipcode:
+        old.zipcode = current.zipcode
+        listings_equal = False
+    elif current.footage != old.footage:
+        old.footage = current.footage
+        listings_equal = False
+    elif current.bed != old.bed:
+        old.bed = current.bed
+        listings_equal = False
+    elif current.bath != old.bath:
+        old.bath = current.bath
+        listings_equal = False
+    elif current.price != old.price:
+        old.price = current.price
+        listings_equal = False
+    elif current.lat != old.lat:
+        old.lat = current.lat
+        listings_equal = False
+    elif current.longitude != old.longitude:
+        old.longitude = current.longitude
+        listings_equal = False
+    elif current.address != old.address:
+        old.address = current.address
+        listings_equal = False
+    else:
+        listings_equal = True
+    return listings_equal
 
 def send_request(url):
     result = ""
