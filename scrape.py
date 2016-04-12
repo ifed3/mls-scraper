@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import global_const, spider
-import csv, os
+import csv, os, datetime
 import pymongo
 from pymongo import MongoClient
 
@@ -32,7 +32,8 @@ def write_csv_file(csv_directory, city_name, city_table):
     documents = global_const.city_table.find(projection={'_id':False})
     #Convert json from db to csv
     #JSON represents flat object, if that changes in the future, this code will not be entirely functional
-    csv_filename = os.path.join(global_const.csv_directory, global_const.city_name + " Shadow.csv")
+    todayDate = datetime.datetime.today().strftime("%m%d%Y")
+    csv_filename = os.path.join(global_const.csv_directory, global_const.city_name + " " + todayDate + " Shadow.csv")
     with open(csv_filename, "wb+") as myfile:
         #Use dict writer in csv creation to ensure desired order
         fieldnames = ["city", "description", "url", "footage", "zipcode", "bed", "bath",
@@ -49,6 +50,10 @@ def set_up():
 
 def main():
     try:
+        set_up()
+        global_const.city_name = ""
+        global_const.city_url = ""
+        global_const.csv_directory = ""
         global_const.city_table = create_datatable(global_const.shadow_db, global_const.city_name)
         url_list = retrieve_urls_from_database(global_const.city_table)
         scrape_site(global_const.city_table, global_const.city_url, global_const.city_name, url_list)
@@ -59,3 +64,6 @@ def main():
         print "Scraping exited"
         write_csv_file(global_const.csv_directory,
                         global_const.city_name, global_const.city_table)
+
+if __name__ == '__main__':
+    main()
